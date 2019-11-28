@@ -4,7 +4,9 @@ function display_peaks_info(fps, kmax_value, kmax_loc, loc, prominence, start)
         elem = kmax_loc(i);
         p = prominence(elem);
         disp("   prominence = " + p);
-        f =  0.5 * (loc(elem)+ start -1)/ fps;
+        frame = loc(elem)+ start -1;
+        disp("   fourier frame = " +  frame);
+        f =   (frame)/ fps;
         disp("   frequence = " + f + " Hz");
     end
 end
