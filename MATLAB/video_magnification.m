@@ -1,20 +1,30 @@
 %profile on
 clear all;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% PARAMS SECTION
 ycbcr = false;
 if ~ycbcr
     weights = [1.0, 1.0, 1.0];
+    mode = 'rgb';
 else
-    %weights = [1.0, 0.2, 0.2];
-    weights = [0.1, 1.0, 1.0];
+    weights = [1.0, 0.2, 0.2];
+    %weights = [0.1, 1.0, 1.0];
+    mode = 'ycbcr';
+
 end
 
 boost_frequence = 100;
-start = 10;
+min_frame = 15;
+max_frame = 300;
 nb_peaks = 1;
+decimation_factor =  2;
+file = 'camera';
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 fprintf( "loading video \n")
 
-file = 'glenn';
+
 reader = VideoReader(strcat('../data/', file  ,'.mp4'));
 fps = reader.FrameRate;
 fprintf( "reading video \n")
@@ -23,12 +33,13 @@ tmp = read(reader);
 
 [H, W, C, N] = size(tmp);
 
-factor =  2;
+max_frame = min(N, max_frame);
 
-fprintf( "resizing video psk peu de ram enft (factor = " + factor + ") \n")
 
-H = round(H / factor);
-W = round(W / factor);
+fprintf( "resizing video psk peu de ram enft (factor = " + decimation_factor + ") \n")
+
+H = round(H / decimation_factor);
+W = round(W / decimation_factor);
 
 
 video = single(zeros(H, W, C, N));
@@ -61,20 +72,23 @@ fprintf("boosting frequencies \n");
 disp("pixel coefficient weigts : " +  weights);
 
 
-x = start:N;
+x = min_frame:max_frame;
 
-F_means = squeeze(max(mean(mean(real(abs(F(:,:,:,x)))))));
+F_means = squeeze(mean(mean(mean(real(abs(F(:,:,:,x)))))));
+
+
+
 plot(x,F_means);
 [v, l, w, prominence] = findpeaks(F_means);
 
 [max_prominences, max_prominence_locs] = maxk(prominence, nb_peaks);
 
 disp("peaks : ")
-display_peaks_info(fps, max_prominences, max_prominence_locs, l, prominence, start)
+display_peaks_info(fps, max_prominences, max_prominence_locs, l, prominence, min_frame)
 
 for i = 1:length(max_prominence_locs)
     elem = max_prominence_locs(i);
-    f = l(elem)+ start - 1;
+    f = l(elem)+ min_frame - 1;
     for j = 1 : 3 
         F(:,:,j ,f) = F(:,:,j,f) * weights(j) * boost_frequence; 
     end
@@ -111,25 +125,14 @@ implay(iF);
 
 %implay(iF);
 
-% fprintf("video writing \n");
-% fprintf("1/3...\n");  
-% filename = strcat(file,'_no_mag_auto.mp4');
-% v = VideoWriter(filename, 'MPEG-4');
-% open(v)
-% writeVideo(v, video_rgb);
-% close(v);
-% fprintf("2/3...\n");
-% filename = strcat(file,'_mag_rgb_auto.mp4');
-% v = VideoWriter(filename, 'MPEG-4');
-% open(v)
-% writeVideo(v, iF_rgb);
-% close(v);
-% fprintf("3/3...\n");
-% filename = strcat(file,'_mag_ycrvb_auto.mp4');
-% v = VideoWriter(filename, 'MPEG-4');
-% open(v)
-% writeVideo(v, iF_ycbcr);
-% close(v);
+fprintf("video writing \n");
+
+filename = strcat('results/', file, '_',mode, '_', nb_peaks, '.mp4');
+v = VideoWriter(filename, 'MPEG-4');
+open(v)
+writeVideo(v, iF_rgb);
+close(v);
+
 
 
 
