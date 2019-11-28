@@ -1,6 +1,0 @@
-﻿  Compiling CUDA source file kernel.cu...
-  
-  I:\E3\CAV\Project\CAV\CAV>"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.1\bin\nvcc.exe" -gencode=arch=compute_35,code=\"sm_35,compute_35\" --use-local-env -ccbin "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\bin\HostX86\x64" -x cu  -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.1\include" -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.1\include"  -G   --keep-dir x64\Debug -maxrregcount=0  --machine 64 --compile -cudart static  -g   -DWIN32 -DWIN64 -D_DEBUG -D_CONSOLE -D_MBCS -Xcompiler "/EHsc /W3 /nologo /Od /Fdx64\Debug\vc142.pdb /FS /Zi /RTC1 /MDd " -o x64\Debug\kernel.cu.obj "I:\E3\CAV\Project\CAV\CAV\kernel.cu" 
-  kernel.cu
-     Creating library I:\E3\CAV\Project\CAV\x64\Debug\CAV.lib and object I:\E3\CAV\Project\CAV\x64\Debug\CAV.exp
-  CAV.vcxproj -> I:\E3\CAV\Project\CAV\x64\Debug\CAV.exe
