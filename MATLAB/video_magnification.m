@@ -3,31 +3,33 @@ clear all; close all; clf;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % PARAMS SECTION
-file = 'wrist2';
+file = 'mael_stab';
     
 is_ycbcr = true; % better for luminance / chrominance separation
 is_fft = true; % seems noisier with fft but conserves phase information
-is_local = true; % better for local changes (ex : wrist.mp4)
+is_local = false; % better for local changes (ex : wrist.mp4)
 if ~is_ycbcr
     weights = [1.0, 1.0, 1.0];
     color_mode = 'rgb';
 else
-    weights = [1.0, 0.2, 0.2];
-    %weights = [0.8, 1.0, 1.0];
+    %weights = [1.0, 0.2, 0.2];
+    weights = [0.8, 1.0, 1.0];
     color_mode = 'ycbcr';
 end
-if is_fft fourier_mode = 'fft', else fourier_mode = 'dct', end;
-if is_local locality = 'local', else locality = 'global', end;
 
-boost_frequence = 70;
-min_frame = 5;
-max_frame = 100;
+boost_frequence = 300;
+min_frame = 8;
+max_frame = 10;
 nb_peaks_global = 1;
 nb_peaks_local = 1;
 decimation_factor =  2;
 prominence_treshold = 0.025;
 sigma = 10/decimation_factor;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+if is_fft fourier_mode = 'fft', else fourier_mode = 'dct', end;
+if is_local locality = 'local', else locality = 'global', end;
+
 
 fprintf( "loading video \n")
 
@@ -97,7 +99,7 @@ plot(x, decay);
 
 if ~is_local
     F_means = squeeze(max(mean(mean(abs(F(:,:,:,x))))));
-    F_means = F_means .* decay;
+    %F_means = F_means .* decay;
     %f = fit(x(:),F_means(:),'exp2');
     %model = f(x);
     %F_means = F_means - model;
@@ -123,11 +125,13 @@ if ~is_local
 else
     F_blur = F;
     for n = 1:N
-        F_blur(:,:,:,n) = imgaussfilt(abs(F_blur(:,:,:,n)), sigma);
+        F_blur(:,:,1,n) = imgaussfilt(abs(F_blur(:,:,1,n)), sigma) * weights(1);
+        F_blur(:,:,2,n) = imgaussfilt(abs(F_blur(:,:,2,n)), sigma) * weights(2);
+        F_blur(:,:,3,n) = imgaussfilt(abs(F_blur(:,:,3,n)), sigma) * weights(3);
     end
     
     for col = 1 : H
-         fprintf("%s\n", strcat(num2str(round(100 * col/single(H))) ," %"));
+        fprintf("%s\n", strcat(num2str(round(100 * col/single(H))) ," %"));
         for lin =1 : W
 
             F_means = squeeze(max(abs(F_blur(col,lin,:,x))));
@@ -153,7 +157,6 @@ else
         end
     end
 end
-
 
 
 fprintf("computing inverses fourier \n");
