@@ -17,9 +17,10 @@ else
     color_mode = 'ycbcr';
 end
 
-boost_frequence = 300;
+nbLevels = 8;
+boost_frequence = 50;
 min_frame = 8;
-max_frame = 10;
+max_frame = 100;
 nb_peaks_global = 1;
 nb_peaks_local = 1;
 decimation_factor =  2;
@@ -69,105 +70,127 @@ for i = 1 : N
     end
 end
 
-clear tmp;
+gpyr = gaussian_pyramid(video, nbLevels);
+lpyr = laplacian_pyramid(gpyr);
+processed = {};
 
-if ~is_ycbcr
-    video = video ./ 255;
-    avg_source = mean(video(:));
-end
 
-fprintf("computing fourier \n");
-if is_fft
-    F = fft(video, [], 4); 
-else
-    F = dct(video, [], 4);
-end
+for level = 1:nbLevels
 
-clear video;
-
-% frequence filtering
-
-fprintf("boosting frequencies \n");
-disp("pixel coefficient weigts : " +  weights);
-
- x = min_frame:max_frame;
- 
-decay = (1 - exp(-10*(x - min_frame)/(max_frame-min_frame))).^2;
-decay= decay(:);
-
-plot(x, decay);
-
-if ~is_local
-    F_means = squeeze(max(mean(mean(abs(F(:,:,:,x))))));
-    %F_means = F_means .* decay;
-    %f = fit(x(:),F_means(:),'exp2');
-    %model = f(x);
-    %F_means = F_means - model;
-    %fit = fminsearch(@(b) norm(F_means - f(b,x)), x, options);
-   
-    %plot(x, f,'-', x, F_means, '*' )
-    figure, plot(x,F_means);
-
-    [v, l, w, prominence] = findpeaks(F_means);
+    video = lpyr{level};
     
-    [max_prominence, max_prominence_locs] = maxk(prominence, nb_peaks_global);
-    disp("peaks : ")
-    display_peaks_info(fps, max_prominence, max_prominence_locs, l, prominence, min_frame)
+    clear tmp;
 
-    for i = 1:length(max_prominence_locs)
-        elem = max_prominence_locs(i);
-        f = l(elem)+ min_frame - 1;
-        for j = 1 : 3 
-            F(:,:,j ,f) = F(:,:,j,f) * weights(j) * boost_frequence; 
+    if ~is_ycbcr
+        video = video ./ 255;
+        avg_source = mean(video(:));
+    end
+
+    fprintf("computing fourier \n");
+    if is_fft
+        F = fft(video, [], 4); 
+    else
+        F = dct(video, [], 4);
+    end
+
+    clear video;
+
+    % frequence filtering
+
+    fprintf("boosting frequencies \n");
+    disp("pixel coefficient weigts : " +  weights);
+
+     x = min_frame:max_frame;
+
+    decay = (1 - exp(-10*(x - min_frame)/(max_frame-min_frame))).^2;
+    decay= decay(:);
+
+    %plot(x, decay);
+
+    if ~is_local
+        F_means = squeeze(max(mean(mean(abs(F(:,:,:,x))))));
+        %F_means = F_means .* decay;
+        %f = fit(x(:),F_means(:),'exp2');
+        %model = f(x);
+        %F_means = F_means - model;
+        %fit = fminsearch(@(b) norm(F_means - f(b,x)), x, options);
+
+        %plot(x, f,'-', x, F_means, '*' )
+        %figure, plot(x,F_means);
+
+        [v, l, w, prominence] = findpeaks(F_means);
+
+        [max_prominence, max_prominence_locs] = maxk(prominence, nb_peaks_global);
+        disp("peaks : ")
+        display_peaks_info(fps, max_prominence, max_prominence_locs, l, prominence, min_frame)
+
+        for i = 1:length(max_prominence_locs)
+            elem = max_prominence_locs(i);
+            f = l(elem)+ min_frame - 1;
+            for j = 1 : 3 
+                F(:,:,j ,f) = F(:,:,j,f) * weights(j) * boost_frequence; 
+            end
         end
-    end
-    
-else
-    F_blur = F;
-    for n = 1:N
-        F_blur(:,:,1,n) = imgaussfilt(abs(F_blur(:,:,1,n)), sigma) * weights(1);
-        F_blur(:,:,2,n) = imgaussfilt(abs(F_blur(:,:,2,n)), sigma) * weights(2);
-        F_blur(:,:,3,n) = imgaussfilt(abs(F_blur(:,:,3,n)), sigma) * weights(3);
-    end
-    
-    for col = 1 : H
-        fprintf("%s\n", strcat(num2str(round(100 * col/single(H))) ," %"));
-        for lin =1 : W
 
-            F_means = squeeze(max(abs(F_blur(col,lin,:,x))));
-            F_means = F_means .* decay;
-            %f = fit(x(:),double(F_means(:)),'exp2');
-            %model = f(x);
-            %F_means = F_means - model;
-            [v, l, w, prominence] = findpeaks(F_means);
-            
-             
-            [max_prominences, max_prominence_locs] = maxk(prominence, nb_peaks_local);
-            
-            for i = 1:length(max_prominence_locs)
-                max_prominence_loc = max_prominence_locs(i);
-                max_prominence = max_prominences(i);
-                if max_prominence > prominence_treshold
-                    f = l(max_prominence_loc)+ min_frame - 1;
-                    for j = 1 : 3 
-                        F(col,lin,j ,f) = F(col,lin,j,f) * weights(j) * boost_frequence; 
+    else
+        F_blur = F;
+        for n = 1:N
+            F_blur(:,:,1,n) = imgaussfilt(abs(F_blur(:,:,1,n)), sigma) * weights(1);
+            F_blur(:,:,2,n) = imgaussfilt(abs(F_blur(:,:,2,n)), sigma) * weights(2);
+            F_blur(:,:,3,n) = imgaussfilt(abs(F_blur(:,:,3,n)), sigma) * weights(3);
+        end
+
+        for col = 1 : H
+            fprintf("%s\n", strcat(num2str(round(100 * col/single(H))) ," %"));
+            for lin =1 : W
+
+                F_means = squeeze(max(abs(F_blur(col,lin,:,x))));
+                F_means = F_means .* decay;
+                %f = fit(x(:),double(F_means(:)),'exp2');
+                %model = f(x);
+                %F_means = F_means - model;
+                [v, l, w, prominence] = findpeaks(F_means);
+
+
+                [max_prominences, max_prominence_locs] = maxk(prominence, nb_peaks_local);
+
+                for i = 1:length(max_prominence_locs)
+                    max_prominence_loc = max_prominence_locs(i);
+                    max_prominence = max_prominences(i);
+                    if max_prominence > prominence_treshold
+                        f = l(max_prominence_loc)+ min_frame - 1;
+                        for j = 1 : 3 
+                            F(col,lin,j ,f) = F(col,lin,j,f) * weights(j) * boost_frequence; 
+                        end
                     end
                 end
             end
         end
     end
+    
+    fprintf("computing inverses fourier \n");
+
+    if is_fft
+        processed{level} = real(ifft(F,[], 4));
+    else
+        processed{level} = idct(F,[], 4);
+    end
+ 
 end
 
+%F = reconstruct(processed);
 
-fprintf("computing inverses fourier \n");
+% fprintf("computing inverses fourier \n");
+% 
+% if is_fft
+%     iF = real(ifft(F,[], 4));
+% else
+%     iF = idct(F,[], 4);
+% end
+% 
+% clear F;
 
-if is_fft
-    iF = real(ifft(F,[], 4));
-else
-    iF = idct(F,[], 4);
-end
-
-clear F;
+iF = reconstruct(processed);
 
 if is_ycbcr
     fprintf("ycbcr back to rgb \n");
