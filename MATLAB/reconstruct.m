@@ -6,6 +6,10 @@ for i = N-1: -1 :1
     tmp = imresize(tmp, [size(laplacian{i},1), size(laplacian{i}, 2)]);
     video =  single(tmp) + laplacian{i};
 end
-video = video;
+if nargin == 2 && float_type == true
+    video = single(video / 255.0);
+else
+    video = uint8(video);
+end
 end
 
