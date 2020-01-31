@@ -1,27 +1,21 @@
 clear all;
 close all;
 
-file = 'keyboard';
+file = 'chess';
 format = 'MOV';
 
 video = VideoReader(strcat('../data/', file, '.', format));
+disp('Reading video...');
 frames = read(video);
 
-factor = 3;
+scale = 0.5;
+disp(strcat('Resizing the video at the scale ', num2str(scale), '...'));
+frames = imresize(frames, scale);
 
-[H, W, C, N] = size(frames);
-new_size = [ceil(H / factor), ceil(W / factor), C, N]
-new_frames = zeros(new_size);
-for i=1:N
-    for c=1:C
-        new_frames(:,:,c,i) = double(imresize(frames(:,:,c,i), new_size(1:2))) / 255;
-    end
-end
-
-v = VideoWriter(strcat('../data/', file, '.mp4'), 'MPEG-4');
-
-open(v);
-writeVideo(v, new_frames);
-close(v);
+writter = VideoWriter(strcat('../data/', file, '.mp4'), 'MPEG-4');
+disp('Writting the video...');
+open(writter);
+writeVideo(writter, frames);
+close(writter);
 
 fprintf('done');
