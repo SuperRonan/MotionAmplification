@@ -1,4 +1,5 @@
 pyr = true; % use pyramid or not
+wrist2 = true;
 if pyr
     file = 'results/wrist_b=200_l=local_sigma=1_c=ycbcr_f=fft.mp4';
     outputname = 'Wrist_pyr';
@@ -6,6 +7,16 @@ else
     file = 'results/wrist_b=200_l=local_sigma=1_c=ycbcr_f=fftNOPYR.mp4';
     outputname = 'Wrist_nopyr';
 end
+if wrist2 && pyr
+    file = 'results/wrist2_b=300_l=local_sigma=1_c=ycbcr_f=fft.mp4';
+    outputname = 'Wrist2_pyr';
+else
+    file = 'results/wrist2_b=300_l=local_sigma=1_c=ycbcr_f=fftNOPYR.mp4';
+    outputname = 'Wrist2_nopyr';
+end
+
+% file = 'results/CR/wrist_cropped.mp4'; outputname = 'Wrist'
+% file = 'results/CR/wrist2_cropped.mp4'; outputname = 'Wrist2'
 
 reader = VideoReader(file);
 fps = reader.FrameRate;
@@ -20,6 +31,5 @@ next = squeeze(next);
 
 slice = [prev extracted next];
 
-imshow(slice)
-% imwrite(slice, 'results/cr/Wrist_nopyr.png')
-% imwrite(slice, strcat('results/cr/', outputname, '.png'))
+% imshow(slice)
+imwrite(slice, strcat('results/cr/', outputname, '.png'))
