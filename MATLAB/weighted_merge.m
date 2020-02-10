@@ -1,6 +1,6 @@
 function res = weighted_merge(pyramid, amplified_pyramid, alphas)
-assert(size(alphas) == size(pyramid));
-assert(size(pyramid) == size(amplified_pyramid));
+assert(all(size(alphas) == size(pyramid)));
+assert(all(size(pyramid) == size(amplified_pyramid)));
 
 N = size(pyramid, 2);
 res = pyramid;

@@ -3,11 +3,11 @@ clear all; close all; clf;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % PARAMS SECTION
-file = 'mael_stab';
+file = 'wrist';
     
 is_ycbcr = true; % better for luminance / chrominance separation
 is_fft = true; % seems noisier with fft but conserves phase information
-is_local = false; % better for local changes (ex : wrist.mp4)
+is_local = true; % better for local changes (ex : wrist.mp4)
 if ~is_ycbcr
     weights = [1.0, 1.0, 1.0];
     color_mode = 'rgb';
@@ -17,15 +17,16 @@ else
     color_mode = 'ycbcr';
 end
 
-nbLevels = 8;
-boost_frequence = 50;
+nbLevels = 5;
+alphas = {0,0.2,0.5,0.8,1};
+boost_frequence = 200;
 min_frame = 8;
-max_frame = 100;
+max_frame = 40;
 nb_peaks_global = 1;
 nb_peaks_local = 1;
-decimation_factor =  2;
-prominence_treshold = 0.025;
-sigma = 10/decimation_factor;
+decimation_factor =  5;
+prominence_treshold = 0.0;%0.025;
+sigma = 1;%10/decimation_factor;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if is_fft fourier_mode = 'fft', else fourier_mode = 'dct', end;
@@ -134,15 +135,18 @@ for level = 1:nbLevels
 
     else
         F_blur = F;
+        
         for n = 1:N
             F_blur(:,:,1,n) = imgaussfilt(abs(F_blur(:,:,1,n)), sigma) * weights(1);
             F_blur(:,:,2,n) = imgaussfilt(abs(F_blur(:,:,2,n)), sigma) * weights(2);
             F_blur(:,:,3,n) = imgaussfilt(abs(F_blur(:,:,3,n)), sigma) * weights(3);
         end
-
-        for col = 1 : H
+        
+        [H_, W_, C_, N_] =  size(F_blur);
+        
+        for col = 1 : H_
             fprintf("%s\n", strcat(num2str(round(100 * col/single(H))) ," %"));
-            for lin =1 : W
+            for lin = 1 : W_
 
                 F_means = squeeze(max(abs(F_blur(col,lin,:,x))));
                 F_means = F_means .* decay;
@@ -178,6 +182,7 @@ for level = 1:nbLevels
  
 end
 
+
 %F = reconstruct(processed);
 
 % fprintf("computing inverses fourier \n");
@@ -189,7 +194,7 @@ end
 % end
 % 
 % clear F;
-
+processed = weighted_merge(lpyr, processed, alphas);
 iF = reconstruct(processed);
 
 if is_ycbcr
