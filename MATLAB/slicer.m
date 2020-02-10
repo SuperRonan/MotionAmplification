@@ -1,4 +1,4 @@
-pyr = true;
+pyr = true; % use pyramid or not
 if pyr
     file = 'results/wrist_b=200_l=local_sigma=1_c=ycbcr_f=fft.mp4';
     outputname = 'Wrist_pyr';
