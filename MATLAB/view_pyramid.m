@@ -1,7 +1,7 @@
 function img = view_pyramid(pyramid)
 % TODO add mode to switch between horizontal and vertical
 if(size(pyramid, 2) == 1)
-    img = pyramid;
+    img = pyramid{1};
 else
     N = size(pyramid, 2);
     height = size(pyramid{1}, 1);
